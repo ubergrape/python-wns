@@ -257,6 +257,7 @@ class WNSTile(WNSBase):
     def prepare_payload(self, payload):
         root = ET.Element("tile")
         visual = ET.SubElement(root, 'visual')
+        visual.attrib['version'] = '3'
         binding = ET.SubElement(visual, 'binding')
         if 'template' in payload:
             binding.attrib['template'] = payload['template']
