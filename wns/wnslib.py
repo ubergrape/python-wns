@@ -224,7 +224,7 @@ class WNSToast(WNSBase):
         if 'image' in payload:
             count = 1
             for image in payload['image']:
-                el = ET.SubElement(binding, 'img')
+                el = ET.SubElement(binding, 'image')
                 el.attrib['id'] = '%d' % count
                 el.attrib['src'] = '%s' % image
                 count += 1
@@ -270,7 +270,7 @@ class WNSTile(WNSBase):
         if 'image' in payload:
             count = 1
             for image in payload['image']:
-                el = ET.SubElement(binding, 'img')
+                el = ET.SubElement(binding, 'image')
                 el.attrib['id'] = '%d' % count
                 el.attrib['src'] = '%s' % image
                 count += 1
