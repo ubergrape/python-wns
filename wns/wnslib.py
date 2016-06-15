@@ -75,8 +75,11 @@ class WNSClient():
             wnsparams.setdefault('template', 'ToastText02')
             wns = WNSToast(accesstoken=self.accesstoken)
         elif wnstype == 'tile':
-            wnsparams.setdefault('template', 'TileSquare150x150Text01')
-            wns = WNSTile(accesstoken=self.accesstoken)
+            if 'tiles' in wnsparams:
+                wns = WNSMultiTile(accesstoken=self.accesstoken)
+            else:
+                wnsparams.setdefault('template', 'TileSquare150x150Text01')
+                wns = WNSTile(accesstoken=self.accesstoken)
         elif wnstype == 'badge':
             wnsparams.setdefault('badge', {'value': None})
             wns = WNSBadge(accesstoken=self.accesstoken)
@@ -275,6 +278,32 @@ class WNSTile(WNSBase):
                 el.attrib['id'] = '%d' % count
                 el.attrib['src'] = '%s' % image
                 count += 1
+        return self.serialize_tree(ET.ElementTree(root))
+
+
+class WNSMultiTile(WNSTile):
+    def prepare_payload(self, payload):
+        root = ET.Element("tile")
+        visual = ET.SubElement(root, 'visual')
+        visual.attrib['version'] = '3'
+        for tile in payload['tiles']:
+            binding = ET.SubElement(visual, 'binding')
+            if 'template' in tile:
+                binding.attrib['template'] = tile['template']
+            if 'text' in tile:
+                count = 1
+                for t in tile['text']:
+                    el = ET.SubElement(binding, 'text')
+                    el.text = t
+                    el.attrib['id'] = '%d' % count
+                    count += 1
+            if 'image' in tile:
+                count = 1
+                for image in tile['image']:
+                    el = ET.SubElement(binding, 'image')
+                    el.attrib['id'] = '%d' % count
+                    el.attrib['src'] = '%s' % image
+                    count += 1
         return self.serialize_tree(ET.ElementTree(root))
 
 
