@@ -58,6 +58,7 @@ class WNSClient():
     def __init__(self, params):
         self.clientid = params['wnsclientid']
         self.clientsecret = params['wnsclientsecret']
+        self.custom_ca_file = params.get('custom_ca_file', None)
         self.tokenexpiry = None
         self.accesstoken = None
 
@@ -73,19 +74,19 @@ class WNSClient():
 
         if wnstype == 'toast':
             wnsparams.setdefault('template', 'ToastText02')
-            wns = WNSToast(accesstoken=self.accesstoken)
+            wns = WNSToast(client=self)
         elif wnstype == 'tile':
             if 'tiles' in wnsparams:
-                wns = WNSMultiTile(accesstoken=self.accesstoken)
+                wns = WNSMultiTile(client=self)
             else:
                 wnsparams.setdefault('template', 'TileSquare150x150Text01')
-                wns = WNSTile(accesstoken=self.accesstoken)
+                wns = WNSTile(client=self)
         elif wnstype == 'badge':
             wnsparams.setdefault('badge', {'value': None})
-            wns = WNSBadge(accesstoken=self.accesstoken)
+            wns = WNSBadge(client=self)
         elif wnstype == 'raw':
             wnsparams.setdefault('raw', 'raw notification')
-            wns = WNSRaw(accesstoken=self.accesstoken)
+            wns = WNSRaw(client=self)
         else:
             raise WNSInvalidPushTypeException(wnstype)
 
@@ -96,7 +97,10 @@ class WNSClient():
                    'client_id': self.clientid,
                    'client_secret': self.clientsecret,
                    'scope': 'notify.windows.com'}
-        response = requests.post(WNSACCESSTOKEN_URL, data=payload)
+        kwargs = {}
+        if self.custom_ca_file:
+            kwargs['verify'] = self.custom_ca_file
+        response = requests.post(WNSACCESSTOKEN_URL, data=payload, **kwargs)
 
         if response.status_code != 200:
             raise WNSException(response._content)
@@ -112,8 +116,9 @@ class WNSBase(object):
     HEADER_WNS_TYPE = 'X-WNS-Type'
     HEADER_WNS_REQUESTFORSTATUS = 'X-WNS-RequestForStatus'
 
-    def __init__(self, accesstoken=None):
-        self.accesstoken = accesstoken
+    def __init__(self, client):
+        self.client = client
+        self.accesstoken = client.accesstoken
         self.headers = {
             'Content-Type': 'text/xml',
             'Content-Length': len(self.accesstoken),
@@ -201,6 +206,9 @@ class WNSBase(object):
 
         """
         data = self.prepare_payload(payload)
+        kwargs = {}
+        if self.client.custom_ca_file:
+            kwargs['verify'] = self.client.custom_ca_file
         response = requests.post(uri, headers=self.headers, data=data)
         return self.parse_response(response)
 
