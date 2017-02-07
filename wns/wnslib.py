@@ -220,7 +220,11 @@ class WNSToast(WNSBase):
         self.set_type('toast')
 
     def prepare_payload(self, payload):
-        root = ET.Element("toast")
+        if 'launch' in payload:
+            launchstring = payload['launch']
+            root = ET.Element('toast', {'launch': launchstring})
+        else:
+            root = ET.Element('toast')
         visual = ET.SubElement(root, 'visual')
         binding = ET.SubElement(visual, 'binding')
         if 'template' in payload:
